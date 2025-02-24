@@ -1,6 +1,5 @@
 package com.goorm.liargame.global.common.dto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.goorm.liargame.global.exception.BaseErrorCode;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,8 +15,8 @@ public class ApiResponse<T> {
     private T data;
 
 
-    public static<T> ApiResponse<T> success(BaseSuccessCode successStatus) {
-        return ApiResponse.<T>builder()
+    public static ApiResponse<Void> success(BaseSuccessCode successStatus) {
+        return ApiResponse.<Void>builder()
                 .status(successStatus.getStatus())
                 .message(successStatus.getMessage())
                 .build();

@@ -45,4 +45,12 @@ public class Member extends BaseEntity {
             : "";
         this.email = email;
     }
+
+    public void updateUsername(String username) {
+        this.username = username;
+    }
+
+    public void updateProfileImageUrl(String imageUrl) {
+        this.profileImageUrl = imageUrl;
+    }
 }
