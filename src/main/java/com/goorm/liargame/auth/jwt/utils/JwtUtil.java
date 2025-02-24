@@ -5,6 +5,7 @@ import com.goorm.liargame.auth.domain.CustomUserDetails;
 import com.goorm.liargame.auth.dto.response.TokenRespDto;
 import com.goorm.liargame.auth.exception.CustomJwtException;
 import com.goorm.liargame.auth.exception.JwtErrorCode;
+import com.goorm.liargame.global.common.utils.RedisUtil;
 import com.goorm.liargame.member.domain.Role;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
@@ -29,6 +30,7 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
+	private final RedisUtil redisUtil;
 	private final JwtProperties jwtProperties;
 	private SecretKey secretKey;
 
@@ -66,8 +68,17 @@ public class JwtUtil {
 			.compact();
 	}
 
+	public boolean isTokenBlacklisted(String token) {
+		return redisUtil.hasKey(token);
+	}
+
 	// JWT 토큰 검증
 	public Claims validateTokenAndGetClaims(String token) {
+		if (isTokenBlacklisted(token)) {
+			log.warn("** Blacklisted Token **");
+			throw new CustomJwtException(JwtErrorCode.BLACKLISTED_TOKEN);
+		}
+
 		try {
 			return Jwts.parserBuilder()
 				.setSigningKey(secretKey).build()

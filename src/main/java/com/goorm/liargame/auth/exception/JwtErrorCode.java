@@ -13,6 +13,7 @@ import static org.springframework.http.HttpStatus.*;
 public enum JwtErrorCode implements BaseErrorCode {
 
 	EXPIRED_TOKEN(UNAUTHORIZED, "토큰이 만료되었습니다."),
+	BLACKLISTED_TOKEN(UNAUTHORIZED, "로그아웃된 사용자입니다."),
 	INVALID_TOKEN(UNAUTHORIZED, "잘못된 토큰입니다."),
 	UNAUTHORIZED_ACCESS(UNAUTHORIZED,  "사용자 인증이 필요합니다."),
 	ACCESS_DENIED(FORBIDDEN, "해당 요청에 대한 접근 권한이 없습니다."),
