@@ -1,5 +1,6 @@
 package com.goorm.liargame.member.domain;
 
+import com.goorm.liargame.global.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,7 +10,7 @@ import static com.goorm.liargame.member.domain.Role.USER;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-public class Member extends com.goorm.liargame.global.common.entity.BaseEntity {
+public class Member extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,10 +20,10 @@ public class Member extends com.goorm.liargame.global.common.entity.BaseEntity {
     @Column(nullable = false)
     private SocialType socialType;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 20)
     private String socialId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true, length = 20)
     private String username;
 
     private String profileImageUrl = "";
@@ -31,7 +32,7 @@ public class Member extends com.goorm.liargame.global.common.entity.BaseEntity {
     @Column(nullable = false)
     private Role role = USER;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 50)
     private String email;
 
     @Builder
