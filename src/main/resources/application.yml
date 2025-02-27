@@ -14,4 +14,4 @@ spring:
   config:
     activate:
       on-profile: prod
-    import: application-prod.yml, application-swagger.yml, application-oauth-local.yml
+    import: application-prod.yml, application-swagger.yml, application-oauth.yml
