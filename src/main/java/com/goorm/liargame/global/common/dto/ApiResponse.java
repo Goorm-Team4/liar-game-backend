@@ -1,6 +1,7 @@
 package com.goorm.liargame.global.common.dto;
 
 import com.goorm.liargame.global.exception.BaseErrorCode;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -9,11 +10,11 @@ import org.springframework.http.HttpStatus;
 @Builder
 //@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
-
+    @Schema(example = "OK")
     private HttpStatus status;
+    @Schema(description = "응답 메시지")
     private String message;
     private T data;
-
 
     public static ApiResponse<Void> success(BaseSuccessCode successStatus) {
         return ApiResponse.<Void>builder()

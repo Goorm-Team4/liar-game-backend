@@ -2,18 +2,21 @@ package com.goorm.liargame.global.exception;
 
 
 import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
+import com.goorm.liargame.auth.presentation.AuthController;
 import com.goorm.liargame.global.common.dto.ApiResponse;
+import com.goorm.liargame.member.presentation.MemberController;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 @Slf4j
-@RestControllerAdvice
+@RestControllerAdvice(annotations = {RestController.class}, basePackageClasses = { MemberController.class, AuthController.class})
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

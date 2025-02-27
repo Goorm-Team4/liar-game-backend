@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 @Getter
 public enum MemberSuccessCode implements BaseSuccessCode {
-    LOGOUT_SUCCESS("로그아웃에 성공하였습니다."),
     DELETE_MEMBER_SUCCESS("회원 탈퇴에 성공하였습니다."),
     UPDATE_MEMBER_SUCCESS("회원 정보 수정에 성공하였습니다."),;
 
