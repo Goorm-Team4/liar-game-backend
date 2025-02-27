@@ -40,7 +40,7 @@ jobs:
 
       - name: Build & Push Docker Image
         run: |
-          sudo docker build -t ${{ secrets.DOCKER_IMAGE }} --platform linux/amd64 .
+          sudo docker build --platform=linux/amd64 -t ${{ secrets.DOCKER_IMAGE }} .
           sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
           sudo docker push ${{ secrets.DOCKER_IMAGE }}
 
