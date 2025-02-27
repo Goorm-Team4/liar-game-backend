@@ -25,8 +25,6 @@ jobs:
           echo "${{ secrets.APPLICATION_PROD }}" > ./application-prod.yml
           touch application-oauth.yml
           echo "${{ secrets.APPLICATION_OAUTH }}" > application-oauth.yml
-          touch application-mail.yml
-          echo "${{ secrets.APPLICATION_MAIL }}" > application-mail.yml
           touch application-s3.yml
           echo "${{ secrets.APPLICATION_S3 }}" > application-s3.yml
         shell: bash
@@ -40,7 +38,7 @@ jobs:
 
       - name: Build & Push Docker Image
         run: |
-          sudo docker buildx --platform=linux/amd64 -t ${{ secrets.DOCKER_IMAGE }} .
+          sudo docker build -t ${{ secrets.DOCKER_IMAGE }} .
           sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
           sudo docker push ${{ secrets.DOCKER_IMAGE }}
 
