@@ -52,8 +52,8 @@ public class GameController {
     /**
      * 라이어의 정답을 판별하여 전송하는 메서드
      */
-    @MessageMapping("/games/{gameId}/result")
-    @SendTo("/sub/games/{gameId}/result")
+    @MessageMapping("/games/{gameId}/liar-answer")
+    @SendTo("/sub/games/{gameId}/final-result")
     public LiarAnswerRespDto verifyLiarAnswer(LiarAnswerReqDto request,
                                               @DestinationVariable String gameId) {
         return gameService.verifyLiarAnswer(request);
