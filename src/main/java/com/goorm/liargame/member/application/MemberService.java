@@ -1,5 +1,6 @@
 package com.goorm.liargame.member.application;
 
+import com.goorm.liargame.global.image.service.AmazonS3Service;
 import com.goorm.liargame.member.domain.Member;
 import com.goorm.liargame.member.dto.request.UpdateInfoReqDto;
 import com.goorm.liargame.member.dto.response.MemberInfoRespDto;
@@ -18,6 +19,7 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final MemberQueryService memberQueryService;
+    private final AmazonS3Service amazonS3Service;
 
     public void deleteMember(String email) {
         Member member = memberQueryService.findByEmail(email);
@@ -31,7 +33,13 @@ public class MemberService {
             member.updateUsername(request.getUsername());
         }
 
-        // TODO: S3 이미지 업로드 + 프로필 이미지 업데이트 기능 추가
+        String imageUrl = null;
+        if (profileImage != null && !profileImage.isEmpty()) {
+            imageUrl = amazonS3Service.uploadImage(profileImage);
+            if (imageUrl != null) {
+                member.updateProfileImageUrl(imageUrl);
+            }
+        }
 
         return MemberInfoRespDto.from(member);
     }
