@@ -22,6 +22,7 @@ public class CorsConfig implements WebMvcConfigurer {
         allowedOriginPatterns.add("https://localhost:3000");
         allowedOriginPatterns.add("http://localhost:8080");
         allowedOriginPatterns.add("https://localhost:8080");
+        allowedOriginPatterns.add("https://jiangxy.github.io"); //STOMP 테스트를 위해 추가
 
         configuration.setAllowedOrigins(allowedOriginPatterns);
         configuration.setAllowedMethods(List.of("HEAD", "POST", "GET", "DELETE", "PUT", "OPTIONS", "PATCH"));

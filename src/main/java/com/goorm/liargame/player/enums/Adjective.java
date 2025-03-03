@@ -1,4 +1,4 @@
-package com.goorm.liargame.player.domain;
+package com.goorm.liargame.player.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
