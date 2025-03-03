@@ -23,7 +23,7 @@ public class GameController {
      * 턴 메시지를 받아서 전송하는 메서드
      */
     @MessageMapping("/games/{gameId}/message/turn") // 메시지 보내는 주소 -> /pub/games/{gameId}/message/turn
-    @SendTo("/sub/games/{gameId}/message") // 메시지 받는 주소 -> /sub/games/{gameId}/message
+    @SendTo("/sub/games/{gameId}/message/turn") // 메시지 받는 주소 -> /sub/games/{gameId}/message
     public TurnMessageRespDto sendTurnMessage(MessageReqDto request,
                                               @DestinationVariable String gameId) {
         return gameService.sendTurnMessage(request);
@@ -33,7 +33,7 @@ public class GameController {
      * 채팅 메시지를 받아서 전송하는 메서드
      */
     @MessageMapping("/games/{gameId}/message/chat")
-    @SendTo("/sub/games/{gameId}/message")
+    @SendTo("/sub/games/{gameId}/message/chat")
     public ChatMessageRespDto sendChatMessage(MessageReqDto request,
                                               @DestinationVariable String gameId) {
         return gameService.sendChatMessage(request);
@@ -52,8 +52,8 @@ public class GameController {
     /**
      * 라이어의 정답을 판별하여 전송하는 메서드
      */
-    @MessageMapping("/games/{gameId}/liar")
-    @SendTo("/sub/games/{gameId}")
+    @MessageMapping("/games/{gameId}/result")
+    @SendTo("/sub/games/{gameId}/result")
     public LiarAnswerRespDto verifyLiarAnswer(LiarAnswerReqDto request,
                                               @DestinationVariable String gameId) {
         return gameService.verifyLiarAnswer(request);
