@@ -1,6 +1,7 @@
 package com.goorm.liargame.game.presentation;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.goorm.liargame.game.application.GameService;
 import com.goorm.liargame.game.dto.request.LiarAnswerReqDto;
 import com.goorm.liargame.game.dto.request.MessageReqDto;
@@ -25,8 +26,8 @@ public class GameController {
     @MessageMapping("/games/{gameId}/chat/turn") // 메시지 보내는 주소 -> /pub/games/{gameId}/chat/turn
     @SendTo("/sub/games/{gameId}/chat/turn") // 메시지 받는 주소 -> /sub/games/{gameId}/chat/turn
     public TurnMessageRespDto sendTurnMessage(MessageReqDto request,
-                                              @DestinationVariable String gameId) {
-        return gameService.sendTurnMessage(request);
+                                              @DestinationVariable String gameId) throws JsonProcessingException {
+        return gameService.sendTurnMessage(gameId, request);
     }
 
     /**
@@ -56,7 +57,7 @@ public class GameController {
     @SendTo("/sub/games/{gameId}/result")
     public LiarAnswerRespDto verifyLiarAnswer(LiarAnswerReqDto request,
                                               @DestinationVariable String gameId) {
-        return gameService.verifyLiarAnswer(request);
+        return gameService.verifyLiarAnswer(gameId, request);
     }
 
 //    @MessageMapping("/games/{gameId}/turn")

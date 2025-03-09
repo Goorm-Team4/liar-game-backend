@@ -6,18 +6,43 @@ import com.goorm.liargame.game.dto.response.ChatMessageRespDto;
 import com.goorm.liargame.game.dto.response.LiarAnswerRespDto;
 import com.goorm.liargame.game.dto.response.TurnMessageRespDto;
 import com.goorm.liargame.game.enums.Player;
+import com.goorm.liargame.global.common.utils.RedisUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class GameService {
 
-    public TurnMessageRespDto sendTurnMessage(MessageReqDto request) {
-        Long nextPlayerId = 1L;
+    private final RedisUtil redisUtil;
+
+    public TurnMessageRespDto sendTurnMessage(String gameId, MessageReqDto request) {
+        String KEY = "game:" + gameId;
+        String ORDER = "order";
+
+        Long nextPlayerId = null;
         boolean lastPlayer = false;
 
-        // TODO: 다음 플레이어 아이디 및 마지막 플레이어 여부 할당
+//        Map<String, Object> game = new HashMap<>();
+//        game.put("word", "사과");
+//        game.put("order", new ArrayList<>(List.of(1L, 2L, 3L, 4L)));
+//        redisUtil.setValue(KEY, game);
+
+        Map<String, Object> game = ((Map<String, Object>) redisUtil.getValue(KEY));
+        List<Long> order = (List<Long>) game.get(ORDER);
+
+        int currentPlayerIdx = order.indexOf(request.getPlayerId());
+        if (currentPlayerIdx == order.size() - 1) {
+            lastPlayer = true;
+        } else {
+            nextPlayerId = order.get(currentPlayerIdx + 1);
+        }
+
         return TurnMessageRespDto.builder()
                 .playerId(request.getPlayerId())
                 .content(request.getContent())
@@ -41,9 +66,19 @@ public class GameService {
 //        return new TurnInfoRespDto(userId);
 //    }
 
-    public LiarAnswerRespDto verifyLiarAnswer(LiarAnswerReqDto request) {
-        // TODO: 라이어 정답 판별
-        boolean correct = true;
+    public LiarAnswerRespDto verifyLiarAnswer(String gameId, LiarAnswerReqDto request) {
+        String KEY = "game:" + gameId;
+        String WORD = "word";
+
+        boolean correct = false;
+
+        Map<String, Object> game = ((Map<String, Object>) redisUtil.getValue(KEY));
+        String word = (String) game.get(WORD);
+
+        if (word.equals(request.getAnswer())) {
+            correct = true;
+        }
+
         Player winner = correct ? Player.LIAR : Player.NORMAL;
 
         return new LiarAnswerRespDto(correct, winner);
