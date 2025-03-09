@@ -43,4 +43,8 @@ public class MemberService {
 
         return MemberInfoRespDto.from(member);
     }
+
+    public MemberInfoRespDto getMemberInfo(String email) {
+        return MemberInfoRespDto.from(memberQueryService.findByEmail(email));
+    }
 }
