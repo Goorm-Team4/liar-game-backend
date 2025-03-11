@@ -1,23 +1,35 @@
 package com.goorm.liargame.game.application;
 
+import com.goorm.liargame.game.dto.request.CreateGameReqDto;
 import com.goorm.liargame.game.dto.request.DeleteGameReqDto;
 import com.goorm.liargame.game.dto.request.JoinGameReqDto;
 import com.goorm.liargame.game.dto.request.LiarAnswerReqDto;
 import com.goorm.liargame.game.dto.request.MessageReqDto;
+import com.goorm.liargame.game.dto.request.StartGameReqDto;
 import com.goorm.liargame.game.dto.response.ChatMessageRespDto;
 import com.goorm.liargame.game.dto.response.CreateGameRespDto;
 import com.goorm.liargame.game.dto.response.JoinGameRespDto;
 import com.goorm.liargame.game.dto.response.LiarAnswerRespDto;
+import com.goorm.liargame.game.dto.response.StartGameRespDto;
 import com.goorm.liargame.game.dto.response.TurnMessageRespDto;
 import com.goorm.liargame.game.enums.Player;
+import com.goorm.liargame.game.enums.Status;
 import com.goorm.liargame.global.common.utils.RedisUtil;
-import com.goorm.liargame.member.application.MemberService;
+import com.goorm.liargame.player.enums.Adjective;
+import com.goorm.liargame.player.enums.CharacterType;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -27,95 +39,137 @@ public class GameService {
 
     private final RedisUtil redisUtil;
     private final String REDIS_GAME_PREFIX = "game:";
-    private final String REDIS_GAME_TURN_PREFIX = "turn:";
-    private final String REDIS_GAME_CHAT_PREFIX = "chat:";
-    private final String BASE_JOIN_URL = "https://example.com/game/join?gameId="; // 참여 URL 기본 값
-    private final Long ROOM_TTL = 3600000L; // 방 TTL: 1시간
-    private final MemberService memberService;
+    private final Random random = new Random();
 
+
+    public String generateUniqueNickname(String gameId) {
+        String key = REDIS_GAME_PREFIX + gameId;
+        String hashKey = "nicknames";
+        String nickname;
+
+        // Redis에서 해당 게임 방에 이미 사용된 닉네임 Set을 가져옵니다.
+        // 만약 없으면 새로운 Set으로 간주합니다.
+        @SuppressWarnings("unchecked")
+
+        Set<String> usedNicknames = (Set<String>) redisUtil.getHashValue(key, hashKey);
+        if (usedNicknames == null) {
+            usedNicknames = new java.util.HashSet<>();
+        }
+        
+        Set<String> usedAnimals = usedNicknames.stream()
+                .map(nickName -> {
+                    String[] parts = nickName.split(" ");
+                    return parts.length >= 2 ? parts[1] : "";
+                })
+                .filter(animal -> !animal.isEmpty())
+                .collect(Collectors.toSet());
+                
+        var availableAnimals = Arrays.stream(CharacterType.values())
+                .filter(ct -> !usedAnimals.contains(ct.getName()))
+                .collect(Collectors.toList());
+
+        CharacterType chosenAnimal = availableAnimals.get(random.nextInt(availableAnimals.size()));
+        Adjective chosenAdjective = Adjective.values()[random.nextInt(Adjective.values().length)];
+        
+        nickname = chosenAdjective.getName() + " " + chosenAnimal.getName();
+
+        return nickname;
+    }
     /**
      * 새로운 방 생성, 방 번호 리턴, redis에 저장
      */
-    public CreateGameRespDto createGame() {
+    public CreateGameRespDto createGame(CreateGameReqDto request) {
         String gameId = UUID.randomUUID().toString();
+        String status = "status";
+        String host = "hostId";
+        String players = "players";
 
         String key = REDIS_GAME_PREFIX + gameId;
         if (!redisUtil.hasKey(key)) {
-            // 빈 HashMap으로 방 생성 (TTL: 1시간)
-            redisUtil.setValue(key, new HashMap<>(), ROOM_TTL);
+            // 빈 HashMap으로 방 생성
+            redisUtil.setPermanentValue(key, new HashMap<>());
         }
 
-        // 참여 URL 생성 (예: https://example.com/game/join?gameId=생성된ID)
-        String joinUrl = BASE_JOIN_URL + gameId;
+        Long playerId = request.getPlayerId();
 
+        // 게임 방 생성자를 host로 지정
+        redisUtil.setHashValue(key, host, playerId);
+        // 게임 진행 상태 코드 저장
+        redisUtil.setHashValue(key, status, Status.WAITING);
+        // 게임 참여자 목록 저장
+        Set<Long> playerList = new HashSet<>();
+        playerList.add(playerId);
+        redisUtil.setHashValue(key, players, playerList);
+        
+        // 게임 참여자의 닉네임을 생성하여 저장
+        String nickname = generateUniqueNickname(gameId);
+        Map<String, String> nicknamesMap = new HashMap<>();
+        nicknamesMap.put(String.valueOf(playerId), nickname);
+        redisUtil.setHashValue(key, "nicknames", nicknamesMap);
+
+        
         // 응답 DTO를 빌더 패턴을 이용해 생성하여 반환
         return CreateGameRespDto.builder()
                 .gameId(gameId)
-                .joinUrl(joinUrl)
                 .message("Game created successfully")
+                .nickname(nickname)
                 .build();
     }
 
     public void deleteGame(DeleteGameReqDto gameId) {
-        String key = REDIS_GAME_PREFIX + gameId;
-        if (redisUtil.hasKey(key)) {
 
-            Object value = redisUtil.getValue(key);
-            Map<String, Object> players;
-
-            if (value instanceof Map) {
-                players = (Map<String, Object>) value;
-            } else {
-                players = new HashMap<>();
-            }
-            
-            // // 게임 결과 계산 (여기서는 예시로 간단한 결과 객체를 생성)
-            // GameResult gameResult = computeGameResult(gameId, players);
-            
-            // // 각 참여자에 대해 멤버 도메인에 게임 결과 저장
-            // for (String playerIdStr : players.keySet()) {
-            //     Long playerId = Long.valueOf(playerIdStr);
-            //     memberService.saveGameResult(playerId, gameResult);
-            // }
-            
-            // // Redis에서 게임 방 삭제
-            // redisUtil.deleteValue(key);
-        }
     }
 
-    public JoinGameRespDto joinGame(String gameId, JoinGameReqDto request) {
-        String key = REDIS_GAME_PREFIX + gameId;
-        if (!redisUtil.hasKey(key)) {
-            throw new IllegalArgumentException("Game not found");
-        }
-        // Redis에 저장된 값은 플레이어 정보를 담은 Map<String, Object>로 가정
-        Object value = redisUtil.getValue(key);
-        Map<String, Object> players;
+    public JoinGameRespDto joinGame(JoinGameReqDto request) {
+        String key = REDIS_GAME_PREFIX + request.getGameId();
 
-        if (value instanceof Map) {
-            players = (Map<String, Object>) value;
-        } else {
-            players = new HashMap<>();
+
+        if (!redisUtil.hasKey(key)) {
+            return JoinGameRespDto.builder()
+                    .message("Game not found")
+                    .build();
         }
-        // playerId를 문자열로 변환하여 key로 사용하고, 값으로도 저장
-        String participantKey = String.valueOf(request.getPlayerId());
-        players.put(participantKey, request.getPlayerId());
-        // 업데이트된 플레이어 목록을 Redis에 다시 저장하면서 TTL 갱신
-        redisUtil.setValue(key, players, ROOM_TTL);
+        
+        Long playerId = request.getPlayerId();
+        // 게임 방에 참여자 추가
+        redisUtil.updateHashSetValue(key, "players", playerId);
+        String nickname = generateUniqueNickname(request.getGameId());
+        redisUtil.updateHashListValue(key, "nicknames", nickname);
+        Map<String, String> nicknamesMap = new HashMap<>();
+        nicknamesMap.put(String.valueOf(playerId), nickname);
+        
 
         return JoinGameRespDto.builder()
-                .gameId(gameId)
-                .message("Joined game successfully with playerId " + request.getPlayerId())
+                .message("Joined game successfully with playerId " + playerId)
                 .build();
     }
 
-    public void removePlayer(DeleteGameReqDto gameId, Long playerId) {
-        String key = REDIS_GAME_PREFIX + gameId;
-        if (redisUtil.hasKey(key)) {
-            HashMap<String, Object> game = (HashMap<String, Object>) redisUtil.getValue(key);
-            game.remove(playerId.toString());
-            redisUtil.setValue(key, game, 3600000L);
+    public StartGameRespDto startGame(StartGameReqDto request) {
+        String key = REDIS_GAME_PREFIX + request.getGameId();
+        String status = "status";
+        String players = "players";
+        String host = "hostId";
+        
+
+        if (!redisUtil.hasKey(key)) {
+            return StartGameRespDto.builder()
+                    .message("Game not found")
+                    .build();
         }
+
+        // 게임 방의 상태를 게임 중으로 변경
+        redisUtil.setHashValue(key, status, Status.PLAYING);
+
+        // 게임 참여자 목록을 가져옴
+        @SuppressWarnings("unchecked")
+        Set<Long> playerList = (Set<Long>) redisUtil.getHashValue(key, players);
+
+        // 게임 시작 응답 DTO를 빌더 패턴을 이용해 생성하여 반환
+        return StartGameRespDto.builder()
+                .message("Game started successfully")
+                // .playerList(new ArrayList<>(playerList))
+                // .hostId((Long) redisUtil.getHashValue(key, host))
+                .build();
     }
 
 

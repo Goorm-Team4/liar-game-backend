@@ -2,6 +2,7 @@ package com.goorm.liargame.game.presentation;
 
 
 import com.goorm.liargame.game.application.GameService;
+import com.goorm.liargame.game.dto.request.CreateGameReqDto;
 import com.goorm.liargame.game.dto.request.JoinGameReqDto;
 import com.goorm.liargame.game.dto.request.LiarAnswerReqDto;
 import com.goorm.liargame.game.dto.request.MessageReqDto;
@@ -10,9 +11,11 @@ import com.goorm.liargame.game.dto.response.CreateGameRespDto;
 import com.goorm.liargame.game.dto.response.JoinGameRespDto;
 import com.goorm.liargame.game.dto.response.LiarAnswerRespDto;
 import com.goorm.liargame.game.dto.response.TurnMessageRespDto;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
-import org.hibernate.mapping.Join;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -79,17 +82,19 @@ public class GameController {
     /**
      * 방 생성 API
      */
-    @PostMapping("/games/create")
-    public ResponseEntity<CreateGameRespDto> createGame() {
-        CreateGameRespDto response = gameService.createGame();
+    @Tag(name = "방", description = "게임 관련 API")
+    @Operation(summary = "방 생성")
+    @PostMapping("/api/v1/games/create")
+    public ResponseEntity<CreateGameRespDto> createGame(CreateGameReqDto request){
+        CreateGameRespDto response = gameService.createGame(request);
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/games/{gameId}/join")
+    @PostMapping("/api/v1/games/{gameId}/join")
     public ResponseEntity<JoinGameRespDto> joinGame(
         @PathVariable String gameId,
         @RequestBody JoinGameReqDto request){
-        JoinGameRespDto response = gameService.joinGame(gameId, request);
+        JoinGameRespDto response = gameService.joinGame(request);
         return ResponseEntity.ok(response);
     }
 

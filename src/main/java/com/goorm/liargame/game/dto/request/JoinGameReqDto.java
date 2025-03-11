@@ -5,4 +5,5 @@ import lombok.Data;
 @Data
 public class JoinGameReqDto {
     private Long playerId;
+    private String gameId;
 }
