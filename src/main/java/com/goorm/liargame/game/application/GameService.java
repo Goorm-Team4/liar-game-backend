@@ -1,10 +1,11 @@
 package com.goorm.liargame.game.application;
 
+import com.goorm.liargame.game.dto.PlayerInfo;
+import com.goorm.liargame.game.dto.request.FinalVoteReqDto;
+import com.goorm.liargame.game.dto.request.FinalVoteResultReqDto;
 import com.goorm.liargame.game.dto.request.LiarAnswerReqDto;
 import com.goorm.liargame.game.dto.request.MessageReqDto;
-import com.goorm.liargame.game.dto.response.ChatMessageRespDto;
-import com.goorm.liargame.game.dto.response.LiarAnswerRespDto;
-import com.goorm.liargame.game.dto.response.TurnMessageRespDto;
+import com.goorm.liargame.game.dto.response.*;
 import com.goorm.liargame.game.enums.Player;
 import com.goorm.liargame.global.common.utils.RedisUtil;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @Service
@@ -82,5 +84,72 @@ public class GameService {
         Player winner = correct ? Player.LIAR : Player.NORMAL;
 
         return new LiarAnswerRespDto(correct, winner);
+    }
+
+
+    public FinalVoteRespDto sendFinalVote(String gameId, FinalVoteReqDto request) {
+        String KEY = "game:" + gameId;
+        String FINAL_VOTE = "final-vote";
+
+        Map<String, Object> game = ((Map<String, Object>) redisUtil.getValue(KEY));
+        Map<Long, Boolean> finalVote = (Map<Long, Boolean>) game.get(FINAL_VOTE);
+        finalVote.put(request.getVoter().getPlayerId(), request.isKill());
+        game.put(FINAL_VOTE, finalVote);
+
+        redisUtil.setValue(KEY, game);
+
+        return new FinalVoteRespDto(request.getVoter(), request.isKill());
+    }
+
+    public FinalVoteResultRespDto sendFinalVoteResult(String gameId, FinalVoteResultReqDto request) {
+        String KEY = "game:" + gameId;
+        String FINAL_VOTE = "final-vote";
+
+
+        Map<String, Object> game = ((Map<String, Object>) redisUtil.getValue(KEY));
+//        Map<Long, Map<String, String>> aplayers = new HashMap<>();
+//        Map<String, String> info = new HashMap<>();
+//        info.put("nickname", "test");
+//        info.put("profileUrl", "test");
+//        aplayers.put(1L, info);
+//        aplayers.put(2L, info);
+//        aplayers.put(3L, info);
+//        aplayers.put(4L, info);
+//        aplayers.put(5L, info);
+//        game.put("liar", 1L);
+//        game.put("players", aplayers);
+//        redisUtil.setValue(KEY, game);
+        Map<Long, Boolean> finalVote = (Map<Long, Boolean>) game.get(FINAL_VOTE);
+        Map<Long, Map<String, String>> players = (Map<Long, Map<String, String>>) game.get("players");
+
+        int size = players.size();
+        long killCount = finalVote.values().stream().filter(v -> v).count();
+
+        Long liarId = (Long) game.get("liar");
+        boolean isLiar = false;
+        PlayerInfo liar = PlayerInfo.from(liarId, players.get(liarId));
+        PlayerInfo votedPlayer;
+
+        if (Objects.equals(liarId, request.getVotedPlayerId())) {
+            isLiar = true;
+            votedPlayer = liar;
+        } else {
+            votedPlayer = PlayerInfo.from(request.getVotedPlayerId(), players.get(request.getVotedPlayerId()));
+        }
+
+        List<PlayerInfo> nomals = players.entrySet().stream()
+                .filter(entry -> !Objects.equals(entry.getKey(), liarId)) // 라이어가 아닌 경우에만 필터링
+                .map(PlayerInfo::from)
+                .toList();
+
+        boolean isKill = killCount >= size / 2;
+
+        return FinalVoteResultRespDto.builder()
+                .liar(liar)
+                .votedPlayer(votedPlayer)
+                .kill(isKill)
+                .isLiar(isLiar)
+                .normals(nomals)
+                .build();
     }
 }

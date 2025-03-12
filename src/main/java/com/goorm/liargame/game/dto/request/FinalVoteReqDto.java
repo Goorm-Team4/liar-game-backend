@@ -1,12 +1,14 @@
 package com.goorm.liargame.game.dto.request;
 
+import com.goorm.liargame.game.dto.PlayerInfo;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class FinalVoteResultReqDto {
+@Getter
+public class FinalVoteReqDto {
 
-        private Long votedPlayerId;
+    private PlayerInfo voter;
+    private boolean kill;
 }
