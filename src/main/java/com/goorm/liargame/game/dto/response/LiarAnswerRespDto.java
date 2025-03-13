@@ -1,6 +1,6 @@
 package com.goorm.liargame.game.dto.response;
 
-import com.goorm.liargame.game.enums.Player;
+import com.goorm.liargame.game.enums.PlayerType;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,9 +10,9 @@ import lombok.NoArgsConstructor;
 public class LiarAnswerRespDto {
 
     private boolean correct;
-    private Player winner;
+    private PlayerType winner;
 
-    public LiarAnswerRespDto(boolean correct, Player winner) {
+    public LiarAnswerRespDto(boolean correct, PlayerType winner) {
         this.correct = correct;
         this.winner = winner;
     }

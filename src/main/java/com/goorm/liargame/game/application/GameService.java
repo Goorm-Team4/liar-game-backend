@@ -12,17 +12,21 @@ import com.goorm.liargame.game.dto.response.JoinGameRespDto;
 import com.goorm.liargame.game.dto.response.LiarAnswerRespDto;
 import com.goorm.liargame.game.dto.response.StartGameRespDto;
 import com.goorm.liargame.game.dto.response.TurnMessageRespDto;
-import com.goorm.liargame.game.enums.Player;
+import com.goorm.liargame.game.enums.PlayerType;
 import com.goorm.liargame.game.enums.Status;
+import com.goorm.liargame.game.enums.Topic;
+import com.goorm.liargame.game.enums.Word;
 import com.goorm.liargame.global.common.utils.RedisUtil;
-import com.goorm.liargame.player.enums.Adjective;
-import com.goorm.liargame.player.enums.CharacterType;
+import com.goorm.liargame.game.enums.Adjective;
+import com.goorm.liargame.game.enums.Character;
 
 import lombok.RequiredArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
@@ -37,7 +41,7 @@ import org.springframework.stereotype.Service;
 public class GameService {
 
     private final RedisUtil redisUtil;
-    private final Random random = new Random();
+    private static Random random = new Random();
     public static String GAME_PREFIX = "game:";
     public static String PLAYERS_KEY = "players";
     public static String FINAL_VOTE_KEY = "final-vote";
@@ -49,42 +53,51 @@ public class GameService {
     public static String STATUS_KEY = "status";
     public static String TURMTIME = "turn-time";
     public static String FINALTIME = "final-time";
+    public static String NICKNAME = "nickname";
+    public static String PROFILEIMG = "profileImg";
+    public static String WINNER = "winner";
 
-    // public String generateUniqueNickname(String gameId) {
-    //     String key = REDIS_GAME_PREFIX + gameId;
-    //     String hashKey = "nicknames";
-    //     String nickname;
+    public Character sampleUniqueAnimal(String GAME_KEY) {
 
-    //     // Redis에서 해당 게임 방에 이미 사용된 닉네임 Set을 가져옵니다.
-    //     // 만약 없으면 새로운 Set으로 간주합니다.
-    //     @SuppressWarnings("unchecked")
+        // Redis에서 해당 게임 방에 이미 사용된 닉네임 Set을 가져옵니다.
+        // 만약 없으면 새로운 Set으로 간주합니다.
+        Map<String, Object> game = ((Map<String, Object>) redisUtil.getValue(GAME_KEY));
+        Map<String, Object> players = (Map<String, Object>) game.get(PLAYERS_KEY);
 
-    //     Set<String> usedNicknames = (Set<String>) redisUtil.getHashValue(key, hashKey);
-    //     if (usedNicknames == null) {
-    //         usedNicknames = new java.util.HashSet<>();
-    //     }
-        
-    //     Set<String> usedAnimals = usedNicknames.stream()
-    //             .map(nickName -> {
-    //                 String[] parts = nickName.split(" ");
-    //                 return parts.length >= 2 ? parts[1] : "";
-    //             })
-    //             .filter(animal -> !animal.isEmpty())
-    //             .collect(Collectors.toSet());
+        Set<String> usedAnimals = players.values().stream()
+        .map(player -> {
+            // 플레이어 정보를 Map<String, String>로 캐스팅
+            Map<String, String> playerData = (Map<String, String>) player;
+            String nickname = playerData.get("nickname");
+            if (nickname == null) return "";
+            String[] parts = nickname.split(" ");
+            return parts.length >= 2 ? parts[1] : "";
+        })
+        .filter(animal -> !animal.isEmpty())
+        .collect(Collectors.toSet());
                 
-    //     var availableAnimals = Arrays.stream(CharacterType.values())
-    //             .filter(ct -> !usedAnimals.contains(ct.getName()))
-    //             .collect(Collectors.toList());
+        // 사용되지 않은 동물 목록 필터링
+        List<Character> availableAnimals = Arrays.stream(Character.values())
+        .filter(ct -> !usedAnimals.contains(ct.getName()))
+        .collect(Collectors.toList());
 
-    //     CharacterType chosenAnimal = availableAnimals.get(random.nextInt(availableAnimals.size()));
-    //     Adjective chosenAdjective = Adjective.values()[random.nextInt(Adjective.values().length)];
+        // 사용 가능한 동물이 없다면, 모든 동물 중에서 선택하거나 예외처리
+        if (availableAnimals.isEmpty()) {
+            availableAnimals = Arrays.asList(Character.values());
+        }
+
+        // 무작위로 동물과 형용사를 선택하여 닉네임 생성
+        Character chosenAnimal = availableAnimals.get(random.nextInt(availableAnimals.size()));
         
-    //     nickname = chosenAdjective.getName() + " " + chosenAnimal.getName();
+        return chosenAnimal;
+    }
 
-    //     return nickname;
-    // }
+    public static Word getRandomWord() {
+        Word[] words = Word.values();
+        return words[random.nextInt(words.length)];
+    }
 
-    public CreateGameRespDto createGame(CreateGameReqDto request) {
+    public CreateGameRespDto createGame() {
         String gameId = UUID.randomUUID().toString();
         String GAME_KEY = GAME_PREFIX + gameId;
 
@@ -94,6 +107,8 @@ public class GameService {
         gameData.put(STATUS_KEY, Status.WAITING);
         // 게임 참여자 목록 생성
         gameData.put(PLAYERS_KEY, new HashMap<>());
+        // 게임 호스트 초기화
+        gameData.put(HOST_KEY, null);
         // 최종 투표 결과 초기화
         gameData.put(FINAL_VOTE_KEY, null);
         // 중간 투표 결과 초기화
@@ -103,13 +118,14 @@ public class GameService {
         // 게임 진행 순서 초기화
         gameData.put(ORDER_KEY, new ArrayList<>());
         // 게임 단어 초기화
-        gameData.put(WORD_KEY, null);
+        Word word = getRandomWord();
+        gameData.put(WORD_KEY, word);
         // 턴 메세지 시간 초기화
         gameData.put(TURMTIME, 30);
         // 최후변론 시간 초기화
         gameData.put(FINALTIME, 60);
-        // 게임 호스트 초기화
-        gameData.put(HOST_KEY, null);
+        // 승리자 정보 초기화
+        gameData.put(WINNER, null);
 
         redisUtil.setPermanentValue(GAME_KEY, gameData);
         
@@ -120,13 +136,11 @@ public class GameService {
                 .build();
     }
 
-    public void deleteGame(DeleteGameReqDto gameId) {
-
-    }
 
     public JoinGameRespDto joinGame(JoinGameReqDto request) {
         String GAME_KEY = GAME_PREFIX + request.getGameId();
-
+        String nickname;
+        String profileImgUrl;
 
         if (!redisUtil.hasKey(GAME_KEY)) {
             return JoinGameRespDto.builder()
@@ -139,48 +153,92 @@ public class GameService {
         Map<String, Object> players = (Map<String, Object>) game.get(PLAYERS_KEY);
 
 
+        // 게임 방의 참여자 목록을 가져옴
         if (players.isEmpty() || Objects.isNull(players)) {
-            // 게임 방의 hostId를 설정
-            Long host = (Long) redisUtil.getValue(HOST_KEY);
-            
+            // 처음 들어온 사용자를 게임 방의 hostId로 설정
+            game.put(HOST_KEY, playerId);
         }
-        // 게임 방에 참여자 추가
-        String nickname = generateUniqueNickname(request.getGameId());
-        redisUtil.updateHashListValue(key, "nicknames", nickname);
+        // 플레이어 정보를 담을 HashMap 생성 (nickname과 profileimage 저장)
+        Map<String, String> playerData = new HashMap<>();
 
-        playersSet.add(playerId);
+        // 게임 방에 참여자 추가
+        // 닉네임 enum에서 랜덤으로 선택
+        Character chosenAnimal = sampleUniqueAnimal(GAME_KEY);
+        Adjective chosenAdjective = Adjective.values()[random.nextInt(Adjective.values().length)];
+
+        nickname = chosenAdjective.getName() + " " + chosenAnimal.getName();
+        profileImgUrl = chosenAnimal.getImageUrl();
+
+        playerData.put(NICKNAME, nickname);
+        playerData.put(PROFILEIMG, profileImgUrl);
+
+        players.put(playerId.toString(), playerData);
+        game.put(PLAYERS_KEY, players);
+
+        redisUtil.setPermanentValue(GAME_KEY, game);
+
 
         return JoinGameRespDto.builder()
                 .message("Joined game successfully with playerId " + playerId)
+                .gameId(request.getGameId())
+                .nickname(nickname)
+                .profileImgUrl(profileImgUrl)
                 .build();
     }
 
     public StartGameRespDto startGame(StartGameReqDto request) {
-        String key = GAME_PREFIX + request.getGameId();
-        String status = "status";
-        String players = "players";
-        String host = "hostId";
-        
+        String GAME_KEY = GAME_PREFIX + request.getGameId();
 
-        if (!redisUtil.hasKey(key)) {
+        if (!redisUtil.hasKey(GAME_KEY)) {
             return StartGameRespDto.builder()
                     .message("Game not found")
                     .build();
         }
 
+        Map<String, Object> game = ((Map<String, Object>) redisUtil.getValue(GAME_KEY));
+
         // 게임 방의 상태를 게임 중으로 변경
-        redisUtil.setHashValue(key, status, Status.PLAYING);
+        game.put(STATUS_KEY, Status.PLAYING);
 
         // 게임 참여자 목록을 가져옴
-        @SuppressWarnings("unchecked")
-        Set<Long> playerList = (Set<Long>) redisUtil.getHashValue(key, players);
+        Map<String, Object> players = (Map<String, Object>) game.get(PLAYERS_KEY);
+        List<String> playerIds = new ArrayList<>(players.keySet());
 
-        // 게임 시작 응답 DTO를 빌더 패턴을 이용해 생성하여 반환
-        return StartGameRespDto.builder()
-                .message("Game started successfully")
-                // .playerList(new ArrayList<>(playerList))
-                // .hostId((Long) redisUtil.getHashValue(key, host))
-                .build();
+        // 라이어 선택
+        String liarId = playerIds.get(random.nextInt(playerIds.size()));
+        game.put(LIAR_KEY, liarId);
+
+        // 게임 참여자 목록을 무작위로 섞어서 게임 순서로 저장
+        Collections.shuffle(playerIds);
+        game.put(ORDER_KEY, playerIds);
+
+        // 게임 방의 단어와 주제를 가져옴
+        Word word = (Word) game.get(WORD_KEY);
+        Topic topic = word.getTopic();
+
+        // 게임 방 정보를 Redis에 저장
+        redisUtil.setPermanentValue(GAME_KEY, game);
+
+        // 라이어인 경우
+        if (request.getPlayerId() == Long.parseLong(liarId)) {
+            return StartGameRespDto.builder()
+                    .message("Game started successfully")
+                    .gameId(request.getGameId())
+                    .word(word.getName())
+                    .topic(topic.getName())
+                    .playerType(PlayerType.LIAR)
+                    .build();
+        }
+        // 시민인 경우
+        else {
+            return StartGameRespDto.builder()
+                    .message("Game started successfully")
+                    .gameId(request.getGameId())
+                    .word(word.getName())
+                    .topic(topic.getName())
+                    .playerType(PlayerType.NORMAL)
+                    .build();
+        }
     }
 
 
@@ -215,8 +273,14 @@ public class GameService {
     public LiarAnswerRespDto verifyLiarAnswer(LiarAnswerReqDto request) {
         // TODO: 라이어 정답 판별
         boolean correct = true;
-        Player winner = correct ? Player.LIAR : Player.NORMAL;
+        PlayerType winner = correct ? PlayerType.LIAR : PlayerType.NORMAL;
 
         return new LiarAnswerRespDto(correct, winner);
     }    
+
+    public void deleteGame(DeleteGameReqDto gameId) {
+
+    }
+
+    
 }

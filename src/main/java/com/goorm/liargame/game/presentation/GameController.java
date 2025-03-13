@@ -83,17 +83,14 @@ public class GameController {
      * 방 생성 API
      */
     @PostMapping("/api/v1/games/create")
-    public ResponseEntity<CreateGameRespDto> createGame(CreateGameReqDto request){
-        CreateGameRespDto response = gameService.createGame(request);
+    public ResponseEntity<CreateGameRespDto> createGame(){
+        CreateGameRespDto response = gameService.createGame();
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/api/v1/games/{gameId}/join")
-    public ResponseEntity<JoinGameRespDto> joinGame(
-        @PathVariable String gameId,
-        @RequestBody JoinGameReqDto request){
-        JoinGameRespDto response = gameService.joinGame(request);
-        return ResponseEntity.ok(response);
+    @MessageMapping("/games/{gameId}/join")
+    @SendTo("/sub/games/{gameId}/join")
+    public JoinGameRespDto joinGame(JoinGameReqDto request, @DestinationVariable String gameId){
+        return gameService.joinGame(request);
     }
-
 }

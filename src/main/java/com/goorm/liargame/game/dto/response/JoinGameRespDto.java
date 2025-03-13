@@ -7,4 +7,7 @@ import lombok.Data;
 @Builder
 public class JoinGameRespDto {
     private String message;
+    private String gameId;
+    private String profileImgUrl;
+    private String nickname;
 }
