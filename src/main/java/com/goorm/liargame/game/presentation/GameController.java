@@ -82,8 +82,6 @@ public class GameController {
     /**
      * 방 생성 API
      */
-    @Tag(name = "방", description = "게임 관련 API")
-    @Operation(summary = "방 생성")
     @PostMapping("/api/v1/games/create")
     public ResponseEntity<CreateGameRespDto> createGame(CreateGameReqDto request){
         CreateGameRespDto response = gameService.createGame(request);

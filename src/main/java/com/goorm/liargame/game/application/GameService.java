@@ -20,17 +20,16 @@ import com.goorm.liargame.player.enums.CharacterType;
 
 import lombok.RequiredArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.ObjectUtils.Null;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
@@ -75,44 +74,29 @@ public class GameService {
 
         return nickname;
     }
-    /**
-     * 새로운 방 생성, 방 번호 리턴, redis에 저장
-     */
+
     public CreateGameRespDto createGame(CreateGameReqDto request) {
         String gameId = UUID.randomUUID().toString();
         String status = "status";
-        String host = "hostId";
         String players = "players";
-
         String key = REDIS_GAME_PREFIX + gameId;
         if (!redisUtil.hasKey(key)) {
             // 빈 HashMap으로 방 생성
             redisUtil.setPermanentValue(key, new HashMap<>());
         }
 
-        Long playerId = request.getPlayerId();
 
-        // 게임 방 생성자를 host로 지정
-        redisUtil.setHashValue(key, host, playerId);
         // 게임 진행 상태 코드 저장
         redisUtil.setHashValue(key, status, Status.WAITING);
         // 게임 참여자 목록 저장
         Set<Long> playerList = new HashSet<>();
-        playerList.add(playerId);
         redisUtil.setHashValue(key, players, playerList);
-        
-        // 게임 참여자의 닉네임을 생성하여 저장
-        String nickname = generateUniqueNickname(gameId);
-        Map<String, String> nicknamesMap = new HashMap<>();
-        nicknamesMap.put(String.valueOf(playerId), nickname);
-        redisUtil.setHashValue(key, "nicknames", nicknamesMap);
 
         
         // 응답 DTO를 빌더 패턴을 이용해 생성하여 반환
         return CreateGameRespDto.builder()
-                .gameId(gameId)
+                .gameId(gameId) 
                 .message("Game created successfully")
-                .nickname(nickname)
                 .build();
     }
 
