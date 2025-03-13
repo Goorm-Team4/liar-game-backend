@@ -33,7 +33,6 @@ public class PlayerInfo {
     }
 
     public static PlayerInfo from(Long playerId, Map<String, String> player) {
-        log.info(player.toString());
         return PlayerInfo.builder()
                 .playerId(playerId)
                 .nickname(player.get("nickname"))
