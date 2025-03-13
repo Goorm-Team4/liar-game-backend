@@ -1,15 +1,19 @@
 package com.goorm.liargame.game.application;
 
 import com.goorm.liargame.game.dto.request.CreateGameReqDto;
-import com.goorm.liargame.game.dto.request.DeleteGameReqDto;
+import com.goorm.liargame.game.dto.request.EndGameReqDto;
+import com.goorm.liargame.game.dto.request.FinalVoteResultReqDto;
 import com.goorm.liargame.game.dto.request.JoinGameReqDto;
 import com.goorm.liargame.game.dto.request.LiarAnswerReqDto;
 import com.goorm.liargame.game.dto.request.MessageReqDto;
+import com.goorm.liargame.game.dto.request.MidtermVoteReqDto;
 import com.goorm.liargame.game.dto.request.StartGameReqDto;
 import com.goorm.liargame.game.dto.response.ChatMessageRespDto;
 import com.goorm.liargame.game.dto.response.CreateGameRespDto;
+import com.goorm.liargame.game.dto.response.EndGameRespDto;
 import com.goorm.liargame.game.dto.response.JoinGameRespDto;
 import com.goorm.liargame.game.dto.response.LiarAnswerRespDto;
+import com.goorm.liargame.game.dto.response.MidtermVoteRespDto;
 import com.goorm.liargame.game.dto.response.StartGameRespDto;
 import com.goorm.liargame.game.dto.response.TurnMessageRespDto;
 import com.goorm.liargame.game.enums.PlayerType;
@@ -112,7 +116,7 @@ public class GameService {
         // 최종 투표 결과 초기화
         gameData.put(FINAL_VOTE_KEY, null);
         // 중간 투표 결과 초기화
-        gameData.put(MIDTERM_VOTE_KEY, null);
+        gameData.put(MIDTERM_VOTE_KEY, new ArrayList<>());
         // 라이어 초기화
         gameData.put(LIAR_KEY, null);
         // 게임 진행 순서 초기화
@@ -278,9 +282,36 @@ public class GameService {
         return new LiarAnswerRespDto(correct, winner);
     }    
 
-    public void deleteGame(DeleteGameReqDto gameId) {
+    public MidtermVoteRespDto sendMidtermVote(MidtermVoteReqDto request) {
+        String GAME_KEY = GAME_PREFIX + request.getGameId();
+        Map<String, Object> game = ((Map<String, Object>) redisUtil.getValue(GAME_KEY));
+        Map<String, Object> midtermVote = (Map<String, Object>) game.get(MIDTERM_VOTE_KEY);
 
+
+
+
+        return new MidtermVoteRespDto();
     }
 
-    
+    public MidtermVoteRespDto sendMidtermVoteResult(MidtermVoteReqDto request) {
+        String GAME_KEY = GAME_PREFIX + request.getGameId();
+        Map<String, Object> game = ((Map<String, Object>) redisUtil.getValue(GAME_KEY));
+        Map<String, Object> midtermVote = (Map<String, Object>) game.get(MIDTERM_VOTE_KEY);
+
+
+
+
+        return new MidtermVoteRespDto();
+    }
+
+    public EndGameRespDto endGame(EndGameReqDto request) {
+        String GAME_KEY = GAME_PREFIX + request.getGameId();
+        Map<String, Object> game = ((Map<String, Object>) redisUtil.getValue(GAME_KEY));
+
+
+
+        return new EndGameRespDto();
+    }
+
+
 }
