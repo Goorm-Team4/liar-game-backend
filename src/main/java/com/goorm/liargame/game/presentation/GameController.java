@@ -2,10 +2,14 @@ package com.goorm.liargame.game.presentation;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.goorm.liargame.game.dto.request.FinalVoteReqDto;
+import com.goorm.liargame.game.dto.response.FinalVoteRespDto;
 import com.goorm.liargame.game.application.GameService;
+import com.goorm.liargame.game.dto.request.FinalVoteResultReqDto;
 import com.goorm.liargame.game.dto.request.LiarAnswerReqDto;
 import com.goorm.liargame.game.dto.request.MessageReqDto;
 import com.goorm.liargame.game.dto.response.ChatMessageRespDto;
+import com.goorm.liargame.game.dto.response.FinalVoteResultRespDto;
 import com.goorm.liargame.game.dto.response.LiarAnswerRespDto;
 import com.goorm.liargame.game.dto.response.TurnMessageRespDto;
 import lombok.RequiredArgsConstructor;
@@ -40,15 +44,25 @@ public class GameController {
         return gameService.sendChatMessage(request);
     }
 
-//    /**
-//     * 최종 투표 결과를 받아 라이어 여부를 전송하는 메서드
-//     */
-//    @MessageMapping("/games/{gameId}/final-vote")
-//    @SendTo("/sub/games/{gameId}")
-//    public FinalVoteResultRespDto processFinalVoteResult(FinalVoteResultReqDto request,
-//                                                         @DestinationVariable String gameId) {
-//        return gameService.processFinalVoteResult(request);
-//    }
+    /**
+     * 최종 투표 전송하는 메서드
+     */
+    @MessageMapping("/games/{gameId}/final-vote")
+    @SendTo("/sub/games/{gameId}/final-vote")
+    public FinalVoteRespDto sendFinalVote(FinalVoteReqDto request,
+                                          @DestinationVariable String gameId) {
+        return gameService.sendFinalVote(gameId, request);
+    }
+
+    /**
+     * 최종 투표 결과를 받고 전송하는 메서드
+     */
+    @MessageMapping("/games/{gameId}/final-vote/result")
+    @SendTo("/sub/games/{gameId}/final-vote/result")
+    public FinalVoteResultRespDto sendFinalVoteResult(FinalVoteResultReqDto request,
+                                                         @DestinationVariable String gameId) {
+        return gameService.sendFinalVoteResult(gameId, request);
+    }
 
     /**
      * 라이어의 정답을 판별하여 전송하는 메서드

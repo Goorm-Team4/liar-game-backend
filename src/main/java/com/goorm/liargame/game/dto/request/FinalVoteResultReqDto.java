@@ -8,5 +8,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class FinalVoteResultReqDto {
 
-        private Long playerId;
+        private Long votedPlayerId;
 }

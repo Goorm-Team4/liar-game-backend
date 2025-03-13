@@ -1,5 +1,6 @@
 package com.goorm.liargame.game.dto.response;
 
+import com.goorm.liargame.game.dto.PlayerInfo;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -9,16 +10,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TurnMessageRespDto {
 
-    private Long playerId;
+    private PlayerInfo player;
     private String content;
-    private Long nextPlayerId;
+    private PlayerInfo nextPlayer;
     private boolean lastPlayer;
 
     @Builder
-    public TurnMessageRespDto(Long playerId, String content, Long nextPlayerId, boolean lastPlayer) {
-        this.playerId = playerId;
+    public TurnMessageRespDto(PlayerInfo player, String content, PlayerInfo nextPlayer, boolean lastPlayer) {
+        this.player = player;
         this.content = content;
-        this.nextPlayerId = nextPlayerId;
+        this.nextPlayer = nextPlayer;
         this.lastPlayer = lastPlayer;
     }
 }

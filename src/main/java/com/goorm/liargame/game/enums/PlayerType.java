@@ -1,6 +1,6 @@
 package com.goorm.liargame.game.enums;
 
-public enum Player {
+public enum PlayerType {
     LIAR,
     NORMAL
 }

@@ -5,10 +5,10 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class MessageReqDto {
+@Getter
+public class FinalVoteReqDto {
 
-    private PlayerInfo player;
-    private String content;
+    private PlayerInfo voter;
+    private boolean kill;
 }
