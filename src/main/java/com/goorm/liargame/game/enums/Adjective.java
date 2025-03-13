@@ -1,4 +1,4 @@
-package com.goorm.liargame.player.enums;
+package com.goorm.liargame.game.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum CharacterType {
+public enum Character {
     DEAR("사슴", "deer"),
     ELER("코끼리", "elephant"),
     MUSHROOM("버섯", "mushroom"),

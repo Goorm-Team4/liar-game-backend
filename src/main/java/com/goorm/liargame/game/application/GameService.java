@@ -6,7 +6,7 @@ import com.goorm.liargame.game.dto.request.FinalVoteResultReqDto;
 import com.goorm.liargame.game.dto.request.LiarAnswerReqDto;
 import com.goorm.liargame.game.dto.request.MessageReqDto;
 import com.goorm.liargame.game.dto.response.*;
-import com.goorm.liargame.game.enums.Player;
+import com.goorm.liargame.game.enums.PlayerType;
 import com.goorm.liargame.global.common.utils.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -87,7 +87,7 @@ public class GameService {
             correct = true;
         }
 
-        Player winner = correct ? Player.LIAR : Player.NORMAL;
+        PlayerType winner = correct ? PlayerType.LIAR : PlayerType.NORMAL;
 
         Long liarId = (Long) game.get(LIAR_KEY);
         Map<String, Map<String, String>> rawPlayers = (Map<String, Map<String, String>>) game.get(PLAYERS_KEY);
