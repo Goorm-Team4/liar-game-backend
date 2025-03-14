@@ -6,10 +6,12 @@ import com.goorm.liargame.game.dto.request.CreateGameReqDto;
 import com.goorm.liargame.game.dto.request.JoinGameReqDto;
 import com.goorm.liargame.game.dto.request.LiarAnswerReqDto;
 import com.goorm.liargame.game.dto.request.MessageReqDto;
+import com.goorm.liargame.game.dto.request.StartGameReqDto;
 import com.goorm.liargame.game.dto.response.ChatMessageRespDto;
 import com.goorm.liargame.game.dto.response.CreateGameRespDto;
 import com.goorm.liargame.game.dto.response.JoinGameRespDto;
 import com.goorm.liargame.game.dto.response.LiarAnswerRespDto;
+import com.goorm.liargame.game.dto.response.StartGameRespDto;
 import com.goorm.liargame.game.dto.response.TurnMessageRespDto;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -92,5 +94,11 @@ public class GameController {
     @SendTo("/sub/games/{gameId}/join")
     public JoinGameRespDto joinGame(JoinGameReqDto request, @DestinationVariable String gameId){
         return gameService.joinGame(request);
+    }
+
+    @MessageMapping("/games/{gameId}/start")
+    @SendTo("/sub/games/{gameId}/start")
+    public StartGameRespDto startGame(StartGameReqDto request, @DestinationVariable String gameId){
+        return gameService.startGame(request);
     }
 }
