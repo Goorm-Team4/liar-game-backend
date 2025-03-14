@@ -187,6 +187,7 @@ public class GameService {
                 .gameId(request.getGameId())
                 .nickname(nickname)
                 .profileImgUrl(profileImgUrl)
+                .playerId(playerId)
                 .build();
     }
 
@@ -312,6 +313,7 @@ public class GameService {
 
         return new EndGameRespDto();
     }
+
 
 
 }
