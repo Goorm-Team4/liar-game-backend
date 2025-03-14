@@ -6,11 +6,15 @@ import com.goorm.liargame.game.dto.request.CreateGameReqDto;
 import com.goorm.liargame.game.dto.request.JoinGameReqDto;
 import com.goorm.liargame.game.dto.request.LiarAnswerReqDto;
 import com.goorm.liargame.game.dto.request.MessageReqDto;
+import com.goorm.liargame.game.dto.request.MidtermVoteReqDto;
+import com.goorm.liargame.game.dto.request.MidtermVoteResultReqDto;
 import com.goorm.liargame.game.dto.request.StartGameReqDto;
 import com.goorm.liargame.game.dto.response.ChatMessageRespDto;
 import com.goorm.liargame.game.dto.response.CreateGameRespDto;
 import com.goorm.liargame.game.dto.response.JoinGameRespDto;
 import com.goorm.liargame.game.dto.response.LiarAnswerRespDto;
+import com.goorm.liargame.game.dto.response.MidtermVoteRespDto;
+import com.goorm.liargame.game.dto.response.MidtermVoteResultRespDto;
 import com.goorm.liargame.game.dto.response.StartGameRespDto;
 import com.goorm.liargame.game.dto.response.TurnMessageRespDto;
 
@@ -101,4 +105,17 @@ public class GameController {
     public StartGameRespDto startGame(StartGameReqDto request, @DestinationVariable String gameId){
         return gameService.startGame(request);
     }
+
+    @MessageMapping("/games/{gameId}/midterm-vote")
+    @SendTo("/sub/games/{gameId}/midterm-vote")
+    public MidtermVoteRespDto sendMidtermVote(MidtermVoteReqDto request, @DestinationVariable String gameId){
+        return gameService.sendMidtermVote(request);
+    }
+
+    @MessageMapping("/games/{gameId}/midterm-vote/result")
+    @SendTo("/sub/games/{gameId}/midterm-vote/result")
+    public MidtermVoteResultRespDto sendMidtermVoteResult(MidtermVoteResultReqDto request, @DestinationVariable String gameId){
+        return gameService.sendMidtermVoteResult(request);
+    }
+
 }

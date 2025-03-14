@@ -7,6 +7,7 @@ import com.goorm.liargame.game.dto.request.JoinGameReqDto;
 import com.goorm.liargame.game.dto.request.LiarAnswerReqDto;
 import com.goorm.liargame.game.dto.request.MessageReqDto;
 import com.goorm.liargame.game.dto.request.MidtermVoteReqDto;
+import com.goorm.liargame.game.dto.request.MidtermVoteResultReqDto;
 import com.goorm.liargame.game.dto.request.StartGameReqDto;
 import com.goorm.liargame.game.dto.response.ChatMessageRespDto;
 import com.goorm.liargame.game.dto.response.CreateGameRespDto;
@@ -296,7 +297,7 @@ public class GameService {
         return new MidtermVoteRespDto(request.getPlayerId(), request.getVotePlayerId());
     }
 
-    public MidtermVoteResultRespDto sendMidtermVoteResult(MidtermVoteReqDto request) {
+    public MidtermVoteResultRespDto sendMidtermVoteResult(MidtermVoteResultReqDto request) {
         String GAME_KEY = GAME_PREFIX + request.getGameId();
         Map<String, Object> game = ((Map<String, Object>) redisUtil.getValue(GAME_KEY));
         Map<Long, Long> midtermVote = (Map<Long, Long>) game.get(MIDTERM_VOTE_KEY);
