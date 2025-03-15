@@ -8,5 +8,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class StartGameReqDto {
     private String gameId;
-    private Long playerId;
+    private String playerId;
 }

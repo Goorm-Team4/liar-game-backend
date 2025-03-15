@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MidtermVoteReqDto {
-    private Long gameId;
-    private Long playerId;
-    private Long votePlayerId;
+    private String gameId;
+    private String playerId;
+    private String votePlayerId;
 }

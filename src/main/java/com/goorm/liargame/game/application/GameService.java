@@ -154,7 +154,8 @@ public class GameService {
                     .build();
         }
         
-        Long playerId = request.getPlayerId();
+        // String을 Long으로 변환
+        Long playerId = Long.parseLong(request.getPlayerId());
         Map<String, Object> game = ((Map<String, Object>) redisUtil.getValue(GAME_KEY));
         Map<Long, Object> players = (Map<Long, Object>) game.get(PLAYERS_KEY);
 
@@ -189,7 +190,7 @@ public class GameService {
                 .gameId(request.getGameId())
                 .nickname(nickname)
                 .profileImgUrl(profileImgUrl)
-                .playerId(playerId)
+                .playerId(playerId.toString())
                 .build();
     }
 
@@ -227,13 +228,13 @@ public class GameService {
         redisUtil.setPermanentValue(GAME_KEY, game);
 
         // 라이어인 경우
-        if (request.getPlayerId() == liarId) {
+        if (Long.parseLong(request.getPlayerId()) == liarId) {
             return StartGameRespDto.builder()
                     .message("Game started successfully")
                     .gameId(request.getGameId())
                     .word(word.getName())
                     .topic(topic.getName())
-                    .playerType(PlayerType.LIAR)
+                    .playerType(PlayerType.LIAR.toString())
                     .build();
         }
         // 시민인 경우
@@ -243,7 +244,7 @@ public class GameService {
                     .gameId(request.getGameId())
                     .word(word.getName())
                     .topic(topic.getName())
-                    .playerType(PlayerType.NORMAL)
+                    .playerType(PlayerType.NORMAL.toString())
                     .build();
         }
     }
@@ -290,12 +291,12 @@ public class GameService {
         Map<String, Object> game = ((Map<String, Object>) redisUtil.getValue(GAME_KEY));
         Map<Long, Long> midtermVote = (Map<Long, Long>) game.get(MIDTERM_VOTE_KEY);
 
-        midtermVote.put(request.getPlayerId(), request.getVotePlayerId());
+        midtermVote.put(Long.parseLong(request.getPlayerId()), Long.parseLong(request.getPlayerId()));
         game.put(MIDTERM_VOTE_KEY, midtermVote);
         redisUtil.setPermanentValue(GAME_KEY, game);
 
 
-        return new MidtermVoteRespDto(request.getPlayerId(), request.getVotePlayerId());
+        return new MidtermVoteRespDto(request.getPlayerId(), request.getPlayerId());
     }
 
     public MidtermVoteResultRespDto sendMidtermVoteResult(MidtermVoteResultReqDto request) {
@@ -324,10 +325,10 @@ public class GameService {
         }
 
         // 최고 득표수와 동일한 후보들을 winners 리스트에 담음
-        List<Long> winners = new ArrayList<>();
+        List<String> winners = new ArrayList<>();
         for (Map.Entry<Long, Integer> entry : voteCount.entrySet()) {
             if (entry.getValue() == maxCount) {
-                winners.add(entry.getKey());
+                winners.add(entry.getKey().toString());
             }
         }
 
@@ -339,7 +340,7 @@ public class GameService {
         String GAME_KEY = GAME_PREFIX + request.getGameId();
         Map<String, Object> game = ((Map<String, Object>) redisUtil.getValue(GAME_KEY));
         
-        
+
 
 
         return new EndGameRespDto();

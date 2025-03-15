@@ -7,10 +7,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Getter
 public class MidtermVoteRespDto {
-    private Long playerId;
-    private Long votePlayerId;
+    private String playerId;
+    private String votePlayerId;
 
-    public MidtermVoteRespDto(Long playerId, Long votePlayerId) {
+    public MidtermVoteRespDto(String playerId, String votePlayerId) {
         this.playerId = playerId;
         this.votePlayerId = votePlayerId;
     }

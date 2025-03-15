@@ -10,5 +10,5 @@ public class JoinGameRespDto {
     private String gameId;
     private String profileImgUrl;
     private String nickname;
-    private Long playerId;
+    private String playerId;
 }

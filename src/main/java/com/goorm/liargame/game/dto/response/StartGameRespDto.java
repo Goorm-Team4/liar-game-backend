@@ -12,5 +12,5 @@ public class StartGameRespDto {
     private String gameId;
     private String word;
     private String topic;
-    private PlayerType playerType;
+    private String playerType;
 }

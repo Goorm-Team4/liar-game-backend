@@ -12,10 +12,10 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MidtermVoteResultRespDto {
 
-    private List<Long> votedPlayer;
+    private List<String> votedPlayer;
 
     @Builder
-    public MidtermVoteResultRespDto(List<Long> votedPlayer) {
+    public MidtermVoteResultRespDto(List<String> votedPlayer) {
         this.votedPlayer = votedPlayer;
     }
 }

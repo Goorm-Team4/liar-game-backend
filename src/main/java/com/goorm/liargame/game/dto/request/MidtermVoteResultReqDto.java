@@ -4,5 +4,5 @@ import lombok.Getter;
 
 @Getter
 public class MidtermVoteResultReqDto {
-    private Long gameId;
+    private String gameId;
 }
