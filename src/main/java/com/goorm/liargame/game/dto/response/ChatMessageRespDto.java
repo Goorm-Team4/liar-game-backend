@@ -9,11 +9,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatMessageRespDto {
 
-    private PlayerInfo playerId;
+    private PlayerInfo player;
     private String content;
 
-    public ChatMessageRespDto(PlayerInfo playerId, String content) {
-        this.playerId = playerId;
+    public ChatMessageRespDto(PlayerInfo player, String content) {
+        this.player = player;
         this.content = content;
     }
 }
