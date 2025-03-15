@@ -7,6 +7,7 @@ import com.goorm.liargame.game.dto.request.JoinGameReqDto;
 import com.goorm.liargame.game.dto.request.LiarAnswerReqDto;
 import com.goorm.liargame.game.dto.request.MessageReqDto;
 import com.goorm.liargame.game.dto.request.MidtermVoteReqDto;
+import com.goorm.liargame.game.dto.request.MidtermVoteResultReqDto;
 import com.goorm.liargame.game.dto.request.StartGameReqDto;
 import com.goorm.liargame.game.dto.response.ChatMessageRespDto;
 import com.goorm.liargame.game.dto.response.CreateGameRespDto;
@@ -14,6 +15,7 @@ import com.goorm.liargame.game.dto.response.EndGameRespDto;
 import com.goorm.liargame.game.dto.response.JoinGameRespDto;
 import com.goorm.liargame.game.dto.response.LiarAnswerRespDto;
 import com.goorm.liargame.game.dto.response.MidtermVoteRespDto;
+import com.goorm.liargame.game.dto.response.MidtermVoteResultRespDto;
 import com.goorm.liargame.game.dto.response.StartGameRespDto;
 import com.goorm.liargame.game.dto.response.TurnMessageRespDto;
 import com.goorm.liargame.game.enums.PlayerType;
@@ -66,7 +68,7 @@ public class GameService {
         // Redis에서 해당 게임 방에 이미 사용된 닉네임 Set을 가져옵니다.
         // 만약 없으면 새로운 Set으로 간주합니다.
         Map<String, Object> game = ((Map<String, Object>) redisUtil.getValue(GAME_KEY));
-        Map<String, Object> players = (Map<String, Object>) game.get(PLAYERS_KEY);
+        Map<Long, Object> players = (Map<Long, Object>) game.get(PLAYERS_KEY);
 
         Set<String> usedAnimals = players.values().stream()
         .map(player -> {
@@ -116,7 +118,7 @@ public class GameService {
         // 최종 투표 결과 초기화
         gameData.put(FINAL_VOTE_KEY, null);
         // 중간 투표 결과 초기화
-        gameData.put(MIDTERM_VOTE_KEY, new ArrayList<>());
+        gameData.put(MIDTERM_VOTE_KEY, new HashMap<>());
         // 라이어 초기화
         gameData.put(LIAR_KEY, null);
         // 게임 진행 순서 초기화
@@ -154,7 +156,7 @@ public class GameService {
         
         Long playerId = request.getPlayerId();
         Map<String, Object> game = ((Map<String, Object>) redisUtil.getValue(GAME_KEY));
-        Map<String, Object> players = (Map<String, Object>) game.get(PLAYERS_KEY);
+        Map<Long, Object> players = (Map<Long, Object>) game.get(PLAYERS_KEY);
 
 
         // 게임 방의 참여자 목록을 가져옴
@@ -176,7 +178,7 @@ public class GameService {
         playerData.put(NICKNAME, nickname);
         playerData.put(PROFILEIMG, profileImgUrl);
 
-        players.put(playerId.toString(), playerData);
+        players.put(playerId, playerData);
         game.put(PLAYERS_KEY, players);
 
         redisUtil.setPermanentValue(GAME_KEY, game);
@@ -206,11 +208,11 @@ public class GameService {
         game.put(STATUS_KEY, Status.PLAYING);
 
         // 게임 참여자 목록을 가져옴
-        Map<String, Object> players = (Map<String, Object>) game.get(PLAYERS_KEY);
-        List<String> playerIds = new ArrayList<>(players.keySet());
+        Map<Long, Object> players = (Map<Long, Object>) game.get(PLAYERS_KEY);
+        List<Long> playerIds = new ArrayList<>(players.keySet());
 
         // 라이어 선택
-        String liarId = playerIds.get(random.nextInt(playerIds.size()));
+        Long liarId = playerIds.get(random.nextInt(playerIds.size()));
         game.put(LIAR_KEY, liarId);
 
         // 게임 참여자 목록을 무작위로 섞어서 게임 순서로 저장
@@ -225,7 +227,7 @@ public class GameService {
         redisUtil.setPermanentValue(GAME_KEY, game);
 
         // 라이어인 경우
-        if (request.getPlayerId() == Long.parseLong(liarId)) {
+        if (request.getPlayerId() == liarId) {
             return StartGameRespDto.builder()
                     .message("Game started successfully")
                     .gameId(request.getGameId())
@@ -286,29 +288,58 @@ public class GameService {
     public MidtermVoteRespDto sendMidtermVote(MidtermVoteReqDto request) {
         String GAME_KEY = GAME_PREFIX + request.getGameId();
         Map<String, Object> game = ((Map<String, Object>) redisUtil.getValue(GAME_KEY));
-        Map<String, Object> midtermVote = (Map<String, Object>) game.get(MIDTERM_VOTE_KEY);
+        Map<Long, Long> midtermVote = (Map<Long, Long>) game.get(MIDTERM_VOTE_KEY);
+
+        midtermVote.put(request.getPlayerId(), request.getVotePlayerId());
+        game.put(MIDTERM_VOTE_KEY, midtermVote);
+        redisUtil.setPermanentValue(GAME_KEY, game);
 
 
-
-
-        return new MidtermVoteRespDto();
+        return new MidtermVoteRespDto(request.getPlayerId(), request.getVotePlayerId());
     }
 
-    public MidtermVoteRespDto sendMidtermVoteResult(MidtermVoteReqDto request) {
+    public MidtermVoteResultRespDto sendMidtermVoteResult(MidtermVoteResultReqDto request) {
         String GAME_KEY = GAME_PREFIX + request.getGameId();
         Map<String, Object> game = ((Map<String, Object>) redisUtil.getValue(GAME_KEY));
-        Map<String, Object> midtermVote = (Map<String, Object>) game.get(MIDTERM_VOTE_KEY);
+        Map<Long, Long> midtermVote = (Map<Long, Long>) game.get(MIDTERM_VOTE_KEY);
 
 
+         // 투표 데이터가 없으면 빈 결과를 반환
+        if (midtermVote == null || midtermVote.isEmpty()) {
+            return new MidtermVoteResultRespDto(new ArrayList<>());
+        }
 
+        // 후보별 표 수를 세기 위한 맵
+        Map<Long, Integer> voteCount = new HashMap<>();
+        for (Long voteCandidateId : midtermVote.values()) {
+            voteCount.put(voteCandidateId, voteCount.getOrDefault(voteCandidateId, 0) + 1);
+        }
 
-        return new MidtermVoteRespDto();
+        // 최고 득표수를 찾음
+        int maxCount = 0;
+        for (Integer count : voteCount.values()) {
+            if (count > maxCount) {
+                maxCount = count;
+            }
+        }
+
+        // 최고 득표수와 동일한 후보들을 winners 리스트에 담음
+        List<Long> winners = new ArrayList<>();
+        for (Map.Entry<Long, Integer> entry : voteCount.entrySet()) {
+            if (entry.getValue() == maxCount) {
+                winners.add(entry.getKey());
+            }
+        }
+
+        // 결과 DTO에 winners(배열 또는 리스트)를 담아서 반환
+        return new MidtermVoteResultRespDto(winners);
     }
 
     public EndGameRespDto endGame(EndGameReqDto request) {
         String GAME_KEY = GAME_PREFIX + request.getGameId();
         Map<String, Object> game = ((Map<String, Object>) redisUtil.getValue(GAME_KEY));
-
+        
+        
 
 
         return new EndGameRespDto();
