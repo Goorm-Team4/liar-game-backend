@@ -19,7 +19,7 @@ public class CorsConfig implements WebMvcConfigurer {
 
         ArrayList<String> allowedOriginPatterns = new ArrayList<>();
         allowedOriginPatterns.add("http://localhost:3000");
-        allowedOriginPatterns.add("https://localhost:3000");
+        allowedOriginPatterns.add("https://liartalk.netlify.app");
         allowedOriginPatterns.add("http://localhost:8080");
         allowedOriginPatterns.add("https://localhost:8080");
         allowedOriginPatterns.add("https://jiangxy.github.io"); //STOMP 테스트를 위해 추가
