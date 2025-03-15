@@ -41,7 +41,7 @@ public class GameController {
     @SendTo("/sub/games/{gameId}/chat/final")
     public ChatMessageRespDto sendChatMessage(MessageReqDto request,
                                               @DestinationVariable String gameId) {
-        return gameService.sendChatMessage(request);
+        return gameService.sendChatMessage(gameId, request);
     }
 
     /**
