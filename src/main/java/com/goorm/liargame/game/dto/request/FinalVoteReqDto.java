@@ -4,9 +4,10 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class FinalVoteResultReqDto {
+@Getter
+public class FinalVoteReqDto {
 
-        private Long votedPlayerId;
+    private Long voterId;
+    private boolean kill;
 }

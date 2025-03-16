@@ -15,28 +15,33 @@ public class PlayerInfo {
 
     private Long playerId;
     private String nickname;
-    private String profileUrl;
+
+    private String profileImg;
+    private final static String NICKNAME_KEY = "nickname";
+    private final static String PROFILE_IMG_KEY = "profileImg";
 
     @Builder
-    public PlayerInfo(Long playerId, String nickname, String profileUrl) {
+    public PlayerInfo(Long playerId, String nickname, String profileImg) {
         this.playerId = playerId;
         this.nickname = nickname;
-        this.profileUrl = profileUrl;
+        this.profileImg = profileImg;
     }
 
     public static PlayerInfo from(Map.Entry<Long, Map<String, String>> player) {
         return PlayerInfo.builder()
                 .playerId(player.getKey())
-                .nickname(player.getValue().get("nickname"))
-                .profileUrl(player.getValue().get("profileUrl"))
+
+                .nickname(player.getValue().get(NICKNAME_KEY))
+                .profileImg(player.getValue().get(PROFILE_IMG_KEY))
                 .build();
     }
 
     public static PlayerInfo from(Long playerId, Map<String, String> player) {
         return PlayerInfo.builder()
                 .playerId(playerId)
-                .nickname(player.get("nickname"))
-                .profileUrl(player.get("profileUrl"))
+
+                .nickname(player.get(NICKNAME_KEY))
+                .profileImg(player.get(PROFILE_IMG_KEY))
                 .build();
     }
 }

@@ -23,3 +23,4 @@ public enum Character {
         return BASE_IMAGE_URL + imageKey + ".png";
     }
 }
+

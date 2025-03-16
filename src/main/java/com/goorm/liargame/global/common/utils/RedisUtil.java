@@ -13,6 +13,10 @@ public class RedisUtil {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
+    public void setValue(String key, Object val) {
+        redisTemplate.opsForValue().set(key, val);
+    }
+
     public void setValue(String key, Object val, Long time) {
         redisTemplate.opsForValue().set(key, val, time, TimeUnit.MILLISECONDS);
     }

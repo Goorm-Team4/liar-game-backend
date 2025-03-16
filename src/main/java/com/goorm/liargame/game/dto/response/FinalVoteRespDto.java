@@ -5,15 +5,14 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ChatMessageRespDto {
+@Getter
+public class FinalVoteRespDto {
+    private PlayerInfo voter;
+    private boolean kill;
 
-    private PlayerInfo player;
-    private String content;
-
-    public ChatMessageRespDto(PlayerInfo player, String content) {
-        this.player = player;
-        this.content = content;
+    public FinalVoteRespDto(PlayerInfo voter, boolean kill) {
+        this.voter = voter;
+        this.kill = kill;
     }
 }

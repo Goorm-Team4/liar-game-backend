@@ -25,8 +25,16 @@ public class MemberController {
 
     private final MemberService memberService;
 
+    @Operation(summary = "회원 정보 조회")
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<MemberInfoRespDto>> getMemberInfo(
+            @AuthenticationPrincipal CustomUserDetails user) {
+        return ResponseEntity.ok(ApiResponse.success(MemberSuccessCode.GET_MEMBER_SUCCESS,
+                memberService.getMemberInfo(user.getEmail())));
+    }
+
     @Operation(summary = "회원 탈퇴")
-    @DeleteMapping
+    @DeleteMapping("/me")
     public ResponseEntity<ApiResponse<Void>> deleteMember(
             @AuthenticationPrincipal CustomUserDetails user) {
         memberService.deleteMember(user.getEmail());

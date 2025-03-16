@@ -1,23 +1,9 @@
 package com.goorm.liargame.game.application;
 
-import com.goorm.liargame.game.dto.request.CreateGameReqDto;
-import com.goorm.liargame.game.dto.request.EndGameReqDto;
-import com.goorm.liargame.game.dto.request.FinalVoteResultReqDto;
-import com.goorm.liargame.game.dto.request.JoinGameReqDto;
-import com.goorm.liargame.game.dto.request.LiarAnswerReqDto;
-import com.goorm.liargame.game.dto.request.MessageReqDto;
-import com.goorm.liargame.game.dto.request.MidtermVoteReqDto;
-import com.goorm.liargame.game.dto.request.MidtermVoteResultReqDto;
-import com.goorm.liargame.game.dto.request.StartGameReqDto;
-import com.goorm.liargame.game.dto.response.ChatMessageRespDto;
-import com.goorm.liargame.game.dto.response.CreateGameRespDto;
-import com.goorm.liargame.game.dto.response.EndGameRespDto;
-import com.goorm.liargame.game.dto.response.JoinGameRespDto;
-import com.goorm.liargame.game.dto.response.LiarAnswerRespDto;
-import com.goorm.liargame.game.dto.response.MidtermVoteRespDto;
-import com.goorm.liargame.game.dto.response.MidtermVoteResultRespDto;
-import com.goorm.liargame.game.dto.response.StartGameRespDto;
-import com.goorm.liargame.game.dto.response.TurnMessageRespDto;
+
+import com.goorm.liargame.game.dto.response.*;
+import com.goorm.liargame.game.dto.request.*;
+
 import com.goorm.liargame.game.enums.PlayerType;
 import com.goorm.liargame.game.enums.Status;
 import com.goorm.liargame.game.enums.Topic;
@@ -25,8 +11,10 @@ import com.goorm.liargame.game.enums.Word;
 import com.goorm.liargame.global.common.utils.RedisUtil;
 import com.goorm.liargame.game.enums.Adjective;
 import com.goorm.liargame.game.enums.Character;
+import com.goorm.liargame.game.dto.PlayerInfo;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,10 +28,14 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class GameService {
 
     private final RedisUtil redisUtil;
@@ -250,21 +242,45 @@ public class GameService {
     }
 
 
-    public TurnMessageRespDto sendTurnMessage(MessageReqDto request) {
-        Long nextPlayerId = 1L;
+
+    public TurnMessageRespDto sendTurnMessage(String gameId, MessageReqDto request) {
+        Map<String, Object> game = getGame(gameId);
+
+        Long nextPlayerId = null;
         boolean lastPlayer = false;
 
-        // TODO: 다음 플레이어 아이디 및 마지막 플레이어 여부 할당
+//        Map<String, Object> new_game = new HashMap<>();
+//        new_game.put("word", "사과");
+//        new_game.put("order", new ArrayList<>(List.of(1L, 2L, 3L, 4L)));
+//        redisUtil.setValue(GAME_KEY, new_game);
+
+        List<Long> order = getOrder(game);
+        Map<Long, Map<String, String>> players = getPlayers(game);
+
+        int currentPlayerIdx = order.indexOf(request.getPlayerId());
+        if (currentPlayerIdx == order.size() - 1) {
+            lastPlayer = true;
+        } else {
+            nextPlayerId = order.get(currentPlayerIdx + 1);
+        }
+
+        PlayerInfo player = PlayerInfo.from(request.getPlayerId(), players.get(request.getPlayerId()));
+        PlayerInfo nextPlayer = PlayerInfo.from(nextPlayerId, players.get(nextPlayerId));
+
         return TurnMessageRespDto.builder()
-                .playerId(request.getPlayerId())
+                .player(player)
                 .content(request.getContent())
-                .nextPlayerId(nextPlayerId)
+                .nextPlayer(nextPlayer)
                 .lastPlayer(lastPlayer)
                 .build();
     }
 
-    public ChatMessageRespDto sendChatMessage(MessageReqDto request) {
-        return new ChatMessageRespDto(request.getPlayerId(), request.getContent());
+    public ChatMessageRespDto sendChatMessage(String gameId, MessageReqDto request) {
+        Map<String, Object> game = getGame(gameId);
+
+        Map<Long, Map<String, String>> players = getPlayers(game);
+        PlayerInfo player = PlayerInfo.from(request.getPlayerId(), players.get(request.getPlayerId()));
+        return new ChatMessageRespDto(player, request.getContent());
     }
 
 //    public TurnInfoRespDto sendTurnInfo(TurnInfoReqDto request) {
@@ -278,13 +294,7 @@ public class GameService {
 //        return new TurnInfoRespDto(userId);
 //    }
 
-    public LiarAnswerRespDto verifyLiarAnswer(LiarAnswerReqDto request) {
-        // TODO: 라이어 정답 판별
-        boolean correct = true;
-        PlayerType winner = correct ? PlayerType.LIAR : PlayerType.NORMAL;
 
-        return new LiarAnswerRespDto(correct, winner);
-    }    
 
     public MidtermVoteRespDto sendMidtermVote(MidtermVoteReqDto request) {
         String GAME_KEY = GAME_PREFIX + request.getGameId();
@@ -297,6 +307,123 @@ public class GameService {
 
 
         return new MidtermVoteRespDto(request.getPlayerId(), request.getPlayerId());
+      
+    public LiarAnswerRespDto verifyLiarAnswer(String gameId, LiarAnswerReqDto request) {
+        Map<String, Object> game = getGame(gameId);
+
+        boolean correct = false;
+        String word = getWord(game);
+
+        if (word.equals(request.getAnswer())) correct = true;
+
+        PlayerType winner = correct ? PlayerType.LIAR : PlayerType.NORMAL;
+
+        Long liarId = (Long) getLiarId(game);
+        Map<Long, Map<String, String>> players = getPlayers(game);
+        PlayerInfo liar = PlayerInfo.from(liarId, players.get(liarId));
+        List<PlayerInfo> nomals = players.entrySet().stream()
+                .filter(entry -> !Objects.equals(entry.getKey(), liarId)) // 라이어가 아닌 경우에만 필터링
+                .map(PlayerInfo::from)
+                .toList();
+
+        return LiarAnswerRespDto.builder()
+                .correct(correct)
+                .winner(winner)
+                .liar(liar)
+                .nomals(nomals)
+                .build();
+    }
+
+    public FinalVoteRespDto sendFinalVote(String gameId, FinalVoteReqDto request) {
+        Map<String, Object> game = getGame(gameId);
+        Map<Long, Boolean> finalVote = getFinalVote(game);
+        finalVote.put(request.getVoterId(), request.isKill());
+        game.put(FINAL_VOTE_KEY, finalVote);
+        Map<Long, Map<String, String>> players = getPlayers(game);
+        PlayerInfo voter = PlayerInfo.from(request.getVoterId(), players.get(request.getVoterId()));
+
+        redisUtil.setValue(GAME_PREFIX + gameId, game);
+
+        return new FinalVoteRespDto(voter, request.isKill());
+    }
+
+    public FinalVoteResultRespDto sendFinalVoteResult(String gameId, FinalVoteResultReqDto request) {
+        Map<String, Object> game = getGame(gameId);
+//        Map<Long, Map<String, String>> aplayers = new HashMap<>();
+//        Map<String, String> info = new HashMap<>();
+//        info.put("nickname", "test");
+//        info.put("profileImg", "test");
+//        aplayers.put(1L, info);
+//        aplayers.put(2L, info);
+//        aplayers.put(3L, info);
+//        aplayers.put(4L, info);
+//        aplayers.put(5L, info);
+//        game.put("liar", 1L);
+//        game.put("players", aplayers);
+//        redisUtil.setValue(GAME_KEY, game);
+        Map<Long, Boolean> finalVote = getFinalVote(game);
+        Map<Long, Map<String, String>> players = getPlayers(game);
+
+        int size = players.size();
+        long killCount = finalVote.values().stream().filter(v -> v).count();
+
+        Long liarId = (Long) getLiarId(game);
+        boolean isLiar = false;
+        PlayerInfo liar = PlayerInfo.from(liarId, players.get(liarId));
+        PlayerInfo votedPlayer;
+
+        if (Objects.equals(liarId, request.getVotedPlayerId())) {
+            isLiar = true;
+            votedPlayer = liar;
+        } else {
+            votedPlayer = PlayerInfo.from(request.getVotedPlayerId(), players.get(request.getVotedPlayerId()));
+        }
+
+        List<PlayerInfo> nomals = players.entrySet().stream()
+                .filter(entry -> !Objects.equals(entry.getKey(), liarId)) // 라이어가 아닌 경우에만 필터링
+                .map(PlayerInfo::from)
+                .toList();
+
+        boolean isKill = killCount >= size / 2;
+
+        return FinalVoteResultRespDto.builder()
+                .liar(liar)
+                .votedPlayer(votedPlayer)
+                .kill(isKill)
+                .isLiar(isLiar)
+                .normals(nomals)
+                .build();
+    }
+
+
+    private static String getWord(Map<String, Object> game) {
+        return (String) game.get(WORD_KEY);
+    }
+
+    private Map<String, Object> getGame(String gameId) {
+        String GAME_KEY = GAME_PREFIX + gameId;
+        return ((Map<String, Object>) redisUtil.getValue(GAME_KEY));
+    }
+
+    private static List<Long> getOrder(Map<String, Object> game) {
+        return (List<Long>) game.get(ORDER_KEY);
+    }
+
+    private static Map<Long, Map<String, String>> getPlayers(Map<String, Object> game) {
+        Map<String, Map<String, String>> rawPlayers = (Map<String, Map<String, String>>) game.get(PLAYERS_KEY);
+        Map<Long, Map<String, String>> players = new HashMap<>();
+        for (Map.Entry<String, Map<String, String>> entry : rawPlayers.entrySet()) {
+            players.put(Long.parseLong(entry.getKey()), entry.getValue());
+        }
+        return players;
+    }
+
+    private static Map<Long, Boolean> getFinalVote(Map<String, Object> game) {
+        return (Map<Long, Boolean>) game.get(FINAL_VOTE_KEY);
+    }
+
+    private static Object getLiarId(Map<String, Object> game) {
+        return game.get(LIAR_KEY);
     }
 
     public MidtermVoteResultRespDto sendMidtermVoteResult(MidtermVoteResultReqDto request) {
