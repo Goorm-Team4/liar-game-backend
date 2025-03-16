@@ -307,6 +307,7 @@ public class GameService {
 
 
         return new MidtermVoteRespDto(request.getPlayerId(), request.getPlayerId());
+    }
       
     public LiarAnswerRespDto verifyLiarAnswer(String gameId, LiarAnswerReqDto request) {
         Map<String, Object> game = getGame(gameId);
