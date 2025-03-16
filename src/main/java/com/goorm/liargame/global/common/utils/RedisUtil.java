@@ -1,6 +1,7 @@
 package com.goorm.liargame.global.common.utils;
 
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,10 @@ public class RedisUtil {
         redisTemplate.opsForValue().set(key, val, time, TimeUnit.MILLISECONDS);
     }
 
+    public void setPermanentValue(String key, Object val) {
+        redisTemplate.opsForValue().set(key, val);
+    }
+
     public Object getValue(String key) {
         return redisTemplate.opsForValue().get(key);
     }
@@ -35,4 +40,5 @@ public class RedisUtil {
     public Long getRemainingTTL(String accessToken) {
         return redisTemplate.getExpire(accessToken, TimeUnit.MILLISECONDS);
     }
+
 }

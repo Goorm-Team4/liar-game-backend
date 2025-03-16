@@ -1,22 +1,22 @@
 package com.goorm.liargame.game.presentation;
 
+import com.goorm.liargame.game.dto.response.*;
+import com.goorm.liargame.game.dto.request.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.goorm.liargame.game.dto.request.FinalVoteReqDto;
-import com.goorm.liargame.game.dto.response.FinalVoteRespDto;
+
 import com.goorm.liargame.game.application.GameService;
-import com.goorm.liargame.game.dto.request.FinalVoteResultReqDto;
-import com.goorm.liargame.game.dto.request.LiarAnswerReqDto;
-import com.goorm.liargame.game.dto.request.MessageReqDto;
-import com.goorm.liargame.game.dto.response.ChatMessageRespDto;
-import com.goorm.liargame.game.dto.response.FinalVoteResultRespDto;
-import com.goorm.liargame.game.dto.response.LiarAnswerRespDto;
-import com.goorm.liargame.game.dto.response.TurnMessageRespDto;
+
+
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
+
 
 @RequiredArgsConstructor
 @Controller
@@ -80,4 +80,38 @@ public class GameController {
 //                                        @DestinationVariable String gameId) {
 //        return gameService.sendTurnInfo(request);
 //    }
+
+    /**
+     * 방 생성 API
+     */
+    @PostMapping("/api/v1/games/create")
+    public ResponseEntity<CreateGameRespDto> createGame(){
+        CreateGameRespDto response = gameService.createGame();
+        return ResponseEntity.ok(response);
+    }
+
+    @MessageMapping("/games/{gameId}/join")
+    @SendTo("/sub/games/{gameId}/join")
+    public JoinGameRespDto joinGame(JoinGameReqDto request, @DestinationVariable String gameId){
+        return gameService.joinGame(request);
+    }
+
+    @MessageMapping("/games/{gameId}/start")
+    @SendTo("/sub/games/{gameId}/start")
+    public StartGameRespDto startGame(StartGameReqDto request, @DestinationVariable String gameId){
+        return gameService.startGame(request);
+    }
+
+    @MessageMapping("/games/{gameId}/midterm-vote")
+    @SendTo("/sub/games/{gameId}/midterm-vote")
+    public MidtermVoteRespDto sendMidtermVote(MidtermVoteReqDto request, @DestinationVariable String gameId){
+        return gameService.sendMidtermVote(request);
+    }
+
+    @MessageMapping("/games/{gameId}/midterm-vote/result")
+    @SendTo("/sub/games/{gameId}/midterm-vote/result")
+    public MidtermVoteResultRespDto sendMidtermVoteResult(MidtermVoteResultReqDto request, @DestinationVariable String gameId){
+        return gameService.sendMidtermVoteResult(request);
+    }
+
 }

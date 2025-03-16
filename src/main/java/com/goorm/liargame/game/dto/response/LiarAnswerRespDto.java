@@ -15,6 +15,7 @@ public class LiarAnswerRespDto {
 
     private boolean correct;
     private PlayerType winner;
+
     private PlayerInfo liar;
     private List<PlayerInfo> nomals;
 
